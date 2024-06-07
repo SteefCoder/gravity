@@ -86,7 +86,7 @@ int main() {
     double smoothing = 0.5;
     int fps = 0;
     double energy = kinetic_energy(&uni) + gravitational_energy(&uni);
-    double closest_distance = 1e+10;
+    double h = 200.0;
     while (!quit) {
         clock_t start = clock();
 
@@ -111,7 +111,7 @@ int main() {
         }
         
         // step_euler(&uni, 200);
-        step_rk4(&uni, 200);
+        step_rk4(&uni, h);
 
         // render to the screen
         SDL_RenderPresent(renderer);
@@ -120,12 +120,6 @@ int main() {
         double frame_time = (double)(end - start) / CLOCKS_PER_SEC;
         double error = (kinetic_energy(&uni) + gravitational_energy(&uni) - energy) / energy;
         fps = (int)(fps * smoothing + (1 - smoothing) / frame_time);
-
-        for (int i = 1; i < uni.N; ++i) {
-            for (int j = 0; j < i; ++j) {
-                closest_distance = min(distance(uni.p[i], uni.p[j]), closest_distance);
-            }
-        }
 
         printf("error: %f\r", error);
     }

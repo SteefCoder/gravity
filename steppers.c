@@ -1,5 +1,8 @@
 #include "gravity.h"
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
 
 
 void step_euler(Universe *uni, double h) {
@@ -24,8 +27,6 @@ void step_rk4(Universe *uni, double h) {
 
     Vector p[uni->N];
     memcpy(p, uni->p, sizeof(Vector) * uni->N);
-
-    double energy = kinetic_energy(uni) + gravitational_energy(uni);
 
     // k1v = acc(uni)
     acc(uni, k1v);
@@ -59,19 +60,13 @@ void step_rk4(Universe *uni, double h) {
     vmul(k3v, h, uni->N, k4x);
     vadd(k4x, uni->v, uni->N, k4x);
     
-    // x = x + h / 6 * (k1x + 2*k2x + 2*k3x + k4x)
     for (int i = 0; i < uni->N; ++i) {
+        // x = x + h / 6 * (k1x + 2*k2x + 2*k3x + k4x)
         uni->p[i].x = p[i].x + h * (k1x[i].x + 2*k2x[i].x + 2*k3x[i].x + k4x[i].x) / 6;
         uni->p[i].y = p[i].y + h * (k1x[i].y + 2*k2x[i].y + 2*k3x[i].y + k4x[i].y) / 6;
-    }
 
-    // v = v + h / 6 * (k1v + 2*k2v + 2*k3v + k4v)
-    for (int i = 0; i < uni->N; ++i) {
+        // v = v + h / 6 * (k1v + 2*k2v + 2*k3v + k4v)
         uni->v[i].x = uni->v[i].x + h * (k1v[i].x + 2*k2v[i].x + 2*k3v[i].x + k4v[i].x) / 6;
         uni->v[i].y = uni->v[i].y + h * (k1v[i].y + 2*k2v[i].y + 2*k3v[i].y + k4v[i].y) / 6;
     }
-
-    double error = kinetic_energy(uni) + gravitational_energy(uni);
-    error = error / (atol + rtol * energy);
-    
 }
