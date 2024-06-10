@@ -6,6 +6,38 @@
 //const int SCREEN_HEIGHT = 500;
 
 
+int graphics_init(SDL_Window **window, SDL_Renderer **renderer) {
+    if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
+        printf("Error initializing SDL: %s\n", SDL_GetError());
+        SDL_Quit();
+        return -1;
+    }
+
+    *window = SDL_CreateWindow(
+        "Test window",
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT,
+        0
+    );
+    if (NULL == *window) {
+        printf("Error creating window: %s\n", SDL_GetError());
+        SDL_Quit();
+        return -1;
+    }
+
+    *renderer = SDL_CreateRenderer(*window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+    if (NULL == *renderer) {
+        printf("Error creating renderer: %s\n", SDL_GetError());
+        SDL_Quit();
+        return -1;
+    }
+
+    return 0;
+}
+
+
 int render_circle(SDL_Renderer *renderer, SDL_Point centre, int radius) {
     int r2 = radius * radius;
     

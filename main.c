@@ -6,38 +6,6 @@
 #include <time.h>
 
 
-int init(SDL_Window **window, SDL_Renderer **renderer) {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        printf("Error initializing SDL: %s\n", SDL_GetError());
-        SDL_Quit();
-        return -1;
-    }
-
-    *window = SDL_CreateWindow(
-        "Test window",
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
-        SCREEN_WIDTH,
-        SCREEN_HEIGHT,
-        0
-    );
-    if (NULL == *window) {
-        printf("Error creating window: %s\n", SDL_GetError());
-        SDL_Quit();
-        return -1;
-    }
-
-    *renderer = SDL_CreateRenderer(*window, -1, 0);
-    if (NULL == *renderer) {
-        printf("Error creating renderer: %s\n", SDL_GetError());
-        SDL_Quit();
-        return -1;
-    }
-
-    return 0;
-}
-
-
 double uniform(double low, double high) {
     return ((double)rand() / RAND_MAX) * (high - low) + low;
 }
@@ -50,7 +18,7 @@ Universe create_random_universe(int N) {
 
     for (int i = 0; i < N; ++i) {
         p[i] = (Vector) { uniform(-1e+9, 1e+9), uniform(-1e+9, 1e+9) };
-        v[i] = (Vector) { uniform(-1e+3, 1e+3), uniform(-1e+3, 1e+3) };
+        v[i] = (Vector) { uniform(-3e+2, 3e+2), uniform(-3e+2, 3e+2) };
         m[i] = uniform(-1e+22, 1e+25);
     }
 
@@ -67,13 +35,13 @@ void destroy_universe(Universe uni) {
 int main() {
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
-    if (init(&window, &renderer) < 0) {
+    if (graphics_init(&window, &renderer) < 0) {
         return -1;
     }
     
     srand(time(NULL));
 
-    const int N = 4;
+    const int N = 3;
 
     Universe uni = create_random_universe(N);
 
@@ -83,10 +51,10 @@ int main() {
     // main event handling loop
     SDL_Event e;
     bool quit = false;
-    double smoothing = 0.5;
+    double smoothing = 0.9;
     int fps = 0;
     double energy = kinetic_energy(&uni) + gravitational_energy(&uni);
-    double h = 200.0;
+    double h = 20.0;
     while (!quit) {
         clock_t start = clock();
 
@@ -111,7 +79,9 @@ int main() {
         }
         
         // step_euler(&uni, 200);
-        step_rk4(&uni, h);
+        for (int i = 0; i < 150; ++i) {
+            step_rk4(&uni, h);
+        }
 
         // render to the screen
         SDL_RenderPresent(renderer);
@@ -120,7 +90,6 @@ int main() {
         double frame_time = (double)(end - start) / CLOCKS_PER_SEC;
         double error = (kinetic_energy(&uni) + gravitational_energy(&uni) - energy) / energy;
         fps = (int)(fps * smoothing + (1 - smoothing) / frame_time);
-
         printf("error: %f\r", error);
     }
     printf("\n");
