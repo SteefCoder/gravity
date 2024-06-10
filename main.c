@@ -80,7 +80,8 @@ int main() {
         
         // step_euler(&uni, 200);
         for (int i = 0; i < 150; ++i) {
-            step_rk4(&uni, h);
+            // step_rk4(&uni, h);
+            h = step_rkn45(&uni, h);
         }
 
         // render to the screen
