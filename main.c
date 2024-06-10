@@ -25,6 +25,22 @@ Universe create_random_universe(int N) {
     return (Universe) { N, p, v, m };
 }
 
+Universe create_earth_moon(int N) {
+    Vector *p = calloc(N, sizeof(Vector));
+    Vector *v = calloc(N, sizeof(Vector));
+    double *m = calloc(N, sizeof(double));
+
+    p[0] = (Vector) { 0, 0 };
+    v[0] = (Vector) { 0, 0 };
+    m[0] = 5.9724e+24;
+
+    p[1] = (Vector) { 0, 3.85e+8 };
+    v[1] = (Vector) { 1.022e+3, 0 };
+    m[1] = 0.07346e+24;
+
+    return (Universe) { N, p, v, m };
+}
+
 void destroy_universe(Universe uni) {
     free(uni.p);
     free(uni.v);
@@ -41,9 +57,10 @@ int main() {
     
     srand(time(NULL));
 
-    const int N = 3;
+    const int N = 2;
 
-    Universe uni = create_random_universe(N);
+    // Universe uni = create_random_universe(N);
+    Universe uni = create_earth_moon(N);
 
     SDL_Point coords[N];
     int radii[N];
@@ -70,7 +87,7 @@ int main() {
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
 
-        scale_to_screen(&uni, 2e+9, 2e+9, 20, coords, radii);
+        scale_to_screen(&uni, 6e+8, 6e+8, 50, coords, radii);
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
         for (int i = 0; i < uni.N; ++i) {
@@ -79,7 +96,7 @@ int main() {
         }
         
         // step_euler(&uni, 200);
-        for (int i = 0; i < 150; ++i) {
+        for (int i = 0; i < 50; ++i) {
             // step_rk4(&uni, h);
             h = step_rkn45(&uni, h);
         }
@@ -91,7 +108,7 @@ int main() {
         double frame_time = (double)(end - start) / CLOCKS_PER_SEC;
         double error = (kinetic_energy(&uni) + gravitational_energy(&uni) - energy) / energy;
         fps = (int)(fps * smoothing + (1 - smoothing) / frame_time);
-        printf("error: %f\r", error);
+        printf("error: %E\t\r", error);
     }
     printf("\n");
 

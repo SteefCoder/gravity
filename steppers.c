@@ -72,7 +72,7 @@ void step_rk4(Universe *uni, double h) {
 }
 
 double step_rkn45(Universe *uni, double h) {
-    double tol = 1e-12;
+    double tol = 1e-9;
     double safety = 0.5; // 50%
 
     Vector k0[uni->N], k1[uni->N], k2[uni->N], k3[uni->N], k4[uni->N];
