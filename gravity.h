@@ -1,10 +1,7 @@
 #ifndef GRAVITY_H
 #define GRAVITY_H
 
-typedef struct Vector {
-    double x;
-    double y;
-} Vector;
+#include "vmath.h"
 
 #define min(a,b) \
     ({ __typeof__ (a) _a = (a); \
@@ -24,12 +21,6 @@ typedef struct Universe {
     Vector *v;
     double *m;
 } Universe;
-
-double distance(Vector p1, Vector p2);
-
-void vmul(Vector *m, double k, int N, Vector *out);
-
-void vadd(Vector *m, Vector *n, int N, Vector *out);
 
 Vector center_of_gravity(const Universe *uni);
 

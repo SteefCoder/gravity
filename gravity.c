@@ -1,32 +1,9 @@
 #include "gravity.h"
+#include "vmath.h"
+
 #include <math.h>
 #include <time.h>
 
-double length(Vector p) {
-    return sqrt(p.x * p.x + p.y * p.y);
-}
-
-double distance(Vector p1, Vector p2) {
-    return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
-}
-
-double distance2(Vector p1, Vector p2) {
-    return (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
-}
-
-void vmul(Vector *m, double k, int N, Vector *out) {
-    for (int i = 0; i < N; ++i) {
-        out[i].x = m[i].x * k;
-        out[i].y = m[i].y * k;
-    }
-}
-
-void vadd(Vector *m, Vector *n, int N, Vector *out) {
-    for (int i = 0; i < N; ++i) {
-        out[i].x = m[i].x + n[i].x;
-        out[i].y = m[i].y + n[i].y;
-    }
-}
 
 Vector center_of_gravity(const Universe *uni) {
     double total_mass = 0;
