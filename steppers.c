@@ -1,3 +1,4 @@
+#include "steppers.h"
 #include "gravity.h"
 #include "vmath.h"
 
@@ -111,6 +112,7 @@ double step_rkn45(Universe *uni, double h) {
         uni->p[i].y = p[i].y + uni->v[i].y * h + (k0[i].y * 13 + k1[i].y * 36 + k2[i].y * 9 + k3[i].y * 2) * h*h/120;
     }
 
+    // uni.v = uni.v + (k0 + 3k1 + 3k2 + k3) * h/8
     for (int i = 0; i < uni->N; ++i) {
         uni->v[i].x += (k0[i].x + k1[i].x * 3 + k2[i].x * 3 + k3[i].x) * h/8;
         uni->v[i].y += (k0[i].y + k1[i].y * 3 + k2[i].y * 3 + k3[i].y) * h/8;
@@ -122,11 +124,51 @@ double step_rkn45(Universe *uni, double h) {
     for (int i = 0; i < uni->N; ++i) {
         error += distance(k3[i], k4[i]);
     }
-    if (0 == error) {
-        // one third at max
-        return 3 * h;
-    } else {
-        error *= h*h/60;
-        return h * pow(tol * safety / error, 0.2);
+    error *= h*h/60;
+    return h * pow(tol * safety / error, 0.2);
+}
+
+double step_rkn_tableau(Universe *uni, double h, const NBT_t *tableau) {
+    double tol = 1e-9;
+    double safety = 0.5; // 50%
+
+    int tk = tableau->kappa;
+
+    Vector f[tk + 2][uni->N];
+
+    Vector p[uni->N];
+    memcpy(p, uni->p, sizeof(Vector) * uni->N);
+
+    for (int kappa = 0; kappa < tk + 1; ++kappa) {
+        int start_ind = kappa * (kappa - 1) / 2;
+        for (int i = 0; i < uni->N; ++i) {
+            double Tx = 0;
+            double Ty = 0;
+            for (int lambda = 0; lambda < kappa; ++lambda) {
+                Tx += f[lambda][i].x * tableau->gamma[start_ind + lambda];
+                Ty += f[lambda][i].y * tableau->gamma[start_ind + lambda];
+            }
+            uni->p[i].x = p[i].x + h * tableau->alpha[kappa] * uni->v[i].x + h*h * Tx;
+            uni->p[i].y = p[i].y + h * tableau->alpha[kappa] * uni->v[i].y + h*h * Ty;
+        }
+        acc(uni, f[kappa]);
     }
+
+    for (int i = 0; i < uni->N; ++i) {
+        for (int kappa = 0; kappa < tk + 1; ++kappa) {
+            uni->v[i].x += h * f[kappa][i].x * tableau->cdot[kappa];
+            uni->v[i].y += h * f[kappa][i].y * tableau->cdot[kappa];
+        }
+    }
+
+    double error = h*h * tableau->gamma[tk*(tk + 3) / 2] * (f[tk] - f[tk + 1]);
+    return h * pow(tol * safety / error, 1 / (tk + 1));
+}
+
+double step_rkn45_tableau(Universe *uni, double h) {
+    static const double alpha[5] = { 0, 1.0/3, 2.0/3, 1, 1 };
+    static const double gamma[10] = { 1.0/18, 0, 2.0/9, 1.0/3, 0, 1.0/6, 13.0/120, 3.0/10, 3.0/40, 1.0/60 };
+    static const double cdot[4] = { 1.0/8, 3.0/8, 3.0/8, 1.0/8 };
+    static const NBT_t tableau = { 4, alpha, gamma, cdot };
+    return step_rkn_tableau(uni, h, &tableau);
 }
