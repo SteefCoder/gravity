@@ -16,6 +16,8 @@ void step_rk4(Universe *uni, double h);
 
 double step_rkn45(Universe *uni, double h);
 
+double step_rkn67(Universe *uni, double h);
+
 double step_rkn45_tableau(Universe *uni, double h);
 
 #endif /* STEPPERS_H */

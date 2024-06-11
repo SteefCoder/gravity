@@ -70,8 +70,10 @@ int main() {
     bool quit = false;
     double smoothing = 0.9;
     int fps = 0;
+    double days = 0;
     double energy = kinetic_energy(&uni) + gravitational_energy(&uni);
     double h = 20.0;
+    clock_t FRAME_CLOCKS = CLOCKS_PER_SEC / 120;
     while (!quit) {
         clock_t start = clock();
 
@@ -91,15 +93,16 @@ int main() {
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
         for (int i = 0; i < uni.N; ++i) {
-            // printf("[%d]\tcoord: (%d, %d)\tradius: %d\treal coord: (%f, %f) \n", i, coords[i].x, coords[i].y, radii[i], uni.p[i].x, uni.p[i].y);
             render_circle(renderer, coords[i], radii[i]);
         }
         
-        // step_euler(&uni, 200);
-        for (int i = 0; i < 50; ++i) {
+        double rts = 0;  // real-time seconds
+        while (clock() - start < FRAME_CLOCKS) {
+            rts += h;
             // step_rk4(&uni, h);
-            h = step_rkn45(&uni, h);
-            // h = step_rkn45_tableau(&uni, h);
+            // h = step_rkn45(&uni, h);
+            // h = step_rkn67(&uni, h);
+            step_euler(&uni, h);
         }
 
         // render to the screen
@@ -109,7 +112,8 @@ int main() {
         double frame_time = (double)(end - start) / CLOCKS_PER_SEC;
         double error = (kinetic_energy(&uni) + gravitational_energy(&uni) - energy) / energy;
         fps = (int)(fps * smoothing + (1 - smoothing) / frame_time);
-        printf("error: %E\t\r", error);
+        rts = 120 * rts / 86400;
+        printf("rts: %d days\t\r", (int) rts);
     }
     printf("\n");
 

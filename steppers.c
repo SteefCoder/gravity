@@ -161,7 +161,11 @@ double step_rkn_tableau(Universe *uni, double h, const NBT_t *tableau) {
         }
     }
 
-    double error = h*h * tableau->gamma[tk*(tk + 3) / 2] * (f[tk] - f[tk + 1]);
+    double error = 0;
+    for (int i = 0; i < uni->N; ++i) {
+        error += distance(f[tk][i], f[tk + 1][i]);
+    }
+    error *= h*h * tableau->gamma[tk*(tk + 3) / 2];
     return h * pow(tol * safety / error, 1 / (tk + 1));
 }
 
@@ -171,4 +175,87 @@ double step_rkn45_tableau(Universe *uni, double h) {
     static const double cdot[4] = { 1.0/8, 3.0/8, 3.0/8, 1.0/8 };
     static const NBT_t tableau = { 4, alpha, gamma, cdot };
     return step_rkn_tableau(uni, h, &tableau);
+}
+
+double step_rkn67(Universe *uni, double h) {
+    double tol = 1e-9;
+    double safety = 0.5; // 50%
+
+    Vector k0[uni->N], k1[uni->N], k2[uni->N], k3[uni->N];
+    Vector k4[uni->N], k5[uni->N], k6[uni->N], k7[uni->N];
+
+    Vector p[uni->N];
+    memcpy(p, uni->p, sizeof(Vector) * uni->N);
+
+    acc(uni, k0);
+
+    for (int i = 0; i < uni->N; ++i) {
+        uni->p[i].x = p[i].x + uni->v[i].x * h/10 + k0[i].x * h*h/200;
+        uni->p[i].y = p[i].y + uni->v[i].y * h/10 + k0[i].y * h*h/200;
+    }
+    acc(uni, k1);
+
+    for (int i = 0; i < uni->N; ++i) {
+        double Tx = (k0[i].x + k1[i].x * 2) / 150;
+        double Ty = (k0[i].y + k1[i].y * 2) / 150;
+        uni->p[i].x = p[i].x + uni->v[i].x * h/5 + Tx * h*h;
+        uni->p[i].y = p[i].y + uni->v[i].y * h/5 + Ty * h*h;
+    }
+    acc(uni, k2);
+
+    for (int i = 0; i < uni->N; ++i) {
+        double Tx = (k0[i].x + k2[i].x*2) * 2/75;
+        double Ty = (k0[i].y + k2[i].y*2) * 2/75;
+        uni->p[i].x = p[i].x + uni->v[i].x * h*2/5 + Tx * h*h;
+        uni->p[i].y = p[i].y + uni->v[i].y * h*2/5 + Ty * h*h;
+    }
+    acc(uni, k3);
+
+    for (int i = 0; i < uni->N; ++i) {
+        double Tx = (k0[i].x + k2[i].x*2 + k3[i].x) * 9/200;
+        double Ty = (k0[i].y + k2[i].y*2 + k3[i].y) * 9/200;
+        uni->p[i].x = p[i].x + uni->v[i].x * h*3/5 + Tx * h*h;
+        uni->p[i].y = p[i].y + uni->v[i].y * h*3/5 + Ty * h*h;
+    }
+    acc(uni, k4);
+
+    for (int i = 0; i < uni->N; ++i) {
+        double Tx = (k0[i].x*199 - k1[i].x*456 + k2[i].x*1410 - k3[i].x*357 + k4[i].x*356) / 3600;
+        double Ty = (k0[i].y*199 - k1[i].y*456 + k2[i].y*1410 - k3[i].y*357 + k4[i].y*356) / 3600;
+        uni->p[i].x = p[i].x + uni->v[i].x * h*4/5 + Tx * h*h;
+        uni->p[i].y = p[i].y + uni->v[i].y * h*4/5 + Ty * h*h;
+    }
+    acc(uni, k5);
+
+    for (int i = 0; i < uni->N; ++i) {
+        double Tx = (-k0[i].x*179 + k1[i].x*816 - k3[i].x*444 + k4[i].x*876 - k5[i].x*157) / 1824;
+        double Ty = (-k0[i].y*179 + k1[i].y*816 - k3[i].y*444 + k4[i].y*876 - k5[i].y*157) / 1824;
+
+        uni->p[i].x = p[i].x + uni->v[i].x * h + Tx * h*h;
+        uni->p[i].y = p[i].y + uni->v[i].y * h + Ty * h*h;
+    }
+    acc(uni, k6);
+
+    for (int i = 0; i < uni->N; ++i) {
+        double Tx = (k0[i].x*122 + k2[i].x*475 + k3[i].x*100 + k4[i].x*250 + k5[i].x*50 + k6[i].x*11) / 2016;
+        double Ty = (k0[i].y*122 + k2[i].y*475 + k3[i].y*100 + k4[i].y*250 + k5[i].y*50 + k6[i].y*11) / 2016;
+
+        uni->p[i].x = p[i].x + uni->v[i].x * h + Tx * h*h;
+        uni->p[i].y = p[i].y + uni->v[i].y * h + Ty * h*h;
+    }
+    acc(uni, k7);
+
+    for (int i = 0; i < uni->N; ++i) {
+        double Tx = (k0[i].x*19 + k2[i].x*75 + k3[i].x*50 + k4[i].x*50 + k5[i].x*75 + k6[i].x*19) / 288;
+        double Ty = (k0[i].y*19 + k2[i].y*75 + k3[i].y*50 + k4[i].y*50 + k5[i].y*75 + k6[i].y*19) / 288;
+        uni->v[i].x += h * Tx;
+        uni->v[i].y += h * Ty;
+    }
+
+    double error = 0;
+    for (int i = 0; i < uni->N; ++i) {
+        error += distance(k6[i], k7[i]);
+    }
+    error *= h*h * 11/2016;
+    return h * pow(safety * tol / error, 1/7);
 }
