@@ -30,4 +30,6 @@ double kinetic_energy(const Universe *uni);
 
 double gravitational_energy(const Universe *uni);
 
+double total_energy(const Universe *uni);
+
 #endif /* GRAVITY_H */
