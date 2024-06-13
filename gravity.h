@@ -13,6 +13,11 @@
        __typeof__ (b) _b = (b); \
        _a > _b ? _a : _b; })
 
+
+#define acc_macro(N) { \
+    \
+} \
+
 static const double G = 6.67430e-11;
 
 typedef struct Universe {

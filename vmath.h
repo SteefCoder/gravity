@@ -3,14 +3,17 @@
 
 #include <stdlib.h>
 
+#define distance(p1, p2) sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y))
+
+#define inv_distance(p1, p2) 1.0 / sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
 typedef struct Vector {
     double x;
     double y;
 } Vector;
 
-double length(Vector p);
+double uniform(double low, double high);
 
-double distance(Vector p1, Vector p2);
+double length(Vector p);
 
 void vadd(Vector *out, const Vector *m, const Vector *n, size_t N);
 

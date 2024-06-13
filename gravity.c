@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <time.h>
+#include <string.h>
 
 
 // Calculate the center of gravity of a universe.
@@ -26,32 +27,27 @@ Vector center_of_gravity(const Universe *uni) {
 // Calculate the accelerations of the objects in a Universe.
 // ### aᵢ = ∑ⱼ mⱼ ⋅ (pⱼ − pᵢ) / d(pⱼ, pᵢ)³
 void acc(const Universe *uni, Vector *a) {
-    // Inverse cubes of Euclidian distances between objects.
-    // Note that dist[i][j] == dist[j][i] and dist[i][i] == 1 (instead of 0)
-    double dist3[uni->N][uni->N];
-    for (int i = 1; i < uni->N; ++i) {
-        for (int j = 0; j < i; ++j) {
-            double d = distance(uni->p[i], uni->p[j]);
-            dist3[i][j] = dist3[j][i] = 1 / (d * d * d);
-            // printf("[%d][%d]\tdist3: %f", i, j, dist3[i][j]);
-        }
-    }
-
-    // Fill the diagonal to avoid division by zero.
-    for (int i = 0; i < uni->N; ++i) {
-        dist3[i][i] = 1;
-    }
+    memset(a, 0, sizeof(Vector) * uni->N);
 
     for (int i = 0; i < uni->N; ++i) {
-        double sumx = 0;
-        double sumy = 0;
-
         // Set the acceleration by summing over the influence of eath other object.
-        for (int j = 0; j < uni->N; ++j) {
-            sumx += dist3[i][j] * uni->m[j] * (uni->p[j].x - uni->p[i].x);
-            sumy += dist3[i][j] * uni->m[j] * (uni->p[j].y - uni->p[i].y);
+        for (int j = 0; j < i; ++j) {
+            double dx = uni->p[j].x - uni->p[i].x;
+            double dy = uni->p[j].y - uni->p[i].y;
+            double d3 = 1.0 / sqrt(dx*dx + dy*dy);
+            d3 = d3 * d3 * d3;
+
+            a[i].x += d3 * uni->m[j] * dx;
+            a[i].y += d3 * uni->m[j] * dy;
+            
+            a[j].x -= d3 * uni->m[i] * dx;
+            a[j].y -= d3 * uni->m[i] * dy;
         }
-        a[i] = (Vector) { G * sumx, G * sumy };
+    }
+
+    for (int i = 0; i < uni->N; ++i) {
+        a[i].x *= G;
+        a[i].y *= G;
     }
 }
 
@@ -75,7 +71,7 @@ double gravitational_energy(const Universe *uni) {
 
     for (int i = 1; i < uni->N; ++i) {
         for (int j = 0; j < i; ++j) {
-            energy -= uni->m[i] * uni->m[j] / distance(uni->p[i], uni->p[j]);
+            energy -= uni->m[i] * uni->m[j] * inv_distance(uni->p[i], uni->p[j]);
         }
     }
 

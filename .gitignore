@@ -1,3 +1,4 @@
 .vscode
 a.out
 gravitylib.so
+gmon.out

@@ -73,7 +73,7 @@ void step_rk4(Universe *uni, double h) {
 }
 
 double step_rkn45(Universe *uni, double h) {
-    double tol = 1e-9;
+    double tol = 1e-12;
     double safety = 0.5; // 50%
 
     Vector k0[uni->N], k1[uni->N], k2[uni->N], k3[uni->N], k4[uni->N];
@@ -106,19 +106,18 @@ double step_rkn45(Universe *uni, double h) {
     acc(uni, k3);
 
     // uni.p = uni.p + h*uni.v + h*h*(k0*13/120 + k1*3/10 + k2*3/40 + k3/60)
-    // k4 = acc(uni.p)
     for (int i = 0; i < uni->N; ++i) {
         uni->p[i].x = p[i].x + uni->v[i].x * h + (k0[i].x * 13 + k1[i].x * 36 + k2[i].x * 9 + k3[i].x * 2) * h*h/120;
         uni->p[i].y = p[i].y + uni->v[i].y * h + (k0[i].y * 13 + k1[i].y * 36 + k2[i].y * 9 + k3[i].y * 2) * h*h/120;
     }
+    // k4 = acc(uni.p)
+    acc(uni, k4);
 
     // uni.v = uni.v + (k0 + 3k1 + 3k2 + k3) * h/8
     for (int i = 0; i < uni->N; ++i) {
         uni->v[i].x += (k0[i].x + k1[i].x * 3 + k2[i].x * 3 + k3[i].x) * h/8;
         uni->v[i].y += (k0[i].y + k1[i].y * 3 + k2[i].y * 3 + k3[i].y) * h/8;
     }
-
-    acc(uni, k4);
 
     double error = 0;
     for (int i = 0; i < uni->N; ++i) {

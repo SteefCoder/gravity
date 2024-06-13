@@ -6,12 +6,7 @@
 #include <time.h>
 
 
-double uniform(double low, double high) {
-    return ((double)rand() / RAND_MAX) * (high - low) + low;
-}
-
-
-Universe create_random_universe(int N) {
+Universe create_random_universe2(int N) {
     Vector *p = calloc(N, sizeof(Vector));
     Vector *v = calloc(N, sizeof(Vector));
     double *m = calloc(N, sizeof(double));
@@ -41,26 +36,20 @@ Universe create_earth_moon(int N) {
     return (Universe) { N, p, v, m };
 }
 
-void destroy_universe(Universe uni) {
-    free(uni.p);
-    free(uni.v);
-    free(uni.m);
-}
 
-
-int main() {
+int main2() {
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
     if (graphics_init(&window, &renderer) < 0) {
         return -1;
     }
     
-    srand(time(NULL));
+    // srand(time(NULL));
 
-    const int N = 2;
+    const int N = 3;
 
-    // Universe uni = create_random_universe(N);
-    Universe uni = create_earth_moon(N);
+    Universe uni = create_random_universe2(N);
+    // Universe uni = create_earth_moon(N);
 
     SDL_Point coords[N];
     int radii[N];
@@ -70,7 +59,7 @@ int main() {
     bool quit = false;
     double smoothing = 0.9;
     int fps = 0;
-    double days = 0;
+    // double days = 0;
     double energy = kinetic_energy(&uni) + gravitational_energy(&uni);
     double h = 20.0;
     clock_t FRAME_CLOCKS = CLOCKS_PER_SEC / 120;
@@ -89,7 +78,7 @@ int main() {
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
 
-        scale_to_screen(&uni, 6e+8, 6e+8, 50, coords, radii);
+        scale_to_screen(&uni, 2e+9, 2e+9, 30, coords, radii);
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
         for (int i = 0; i < uni.N; ++i) {
@@ -97,12 +86,14 @@ int main() {
         }
         
         double rts = 0;  // real-time seconds
-        while (clock() - start < FRAME_CLOCKS) {
+        int i = 0;
+        while ((clock() - start < FRAME_CLOCKS) && (i < 5000)) {
             rts += h;
             // step_rk4(&uni, h);
-            // h = step_rkn45(&uni, h);
+            h = step_rkn45(&uni, h);
             // h = step_rkn67(&uni, h);
-            step_euler(&uni, h);
+            // step_euler(&uni, h);
+            ++i;
         }
 
         // render to the screen
@@ -113,11 +104,11 @@ int main() {
         double error = (kinetic_energy(&uni) + gravitational_energy(&uni) - energy) / energy;
         fps = (int)(fps * smoothing + (1 - smoothing) / frame_time);
         rts = 120 * rts / 86400;
-        printf("rts: %d days\t\r", (int) rts);
+        printf("error: %E parts\t\r", error);
     }
     printf("\n");
 
-    destroy_universe(uni);
+    // destroy_universe(uni);
     SDL_DestroyWindow(window);
     SDL_Quit();
     return 0;

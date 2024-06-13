@@ -2,12 +2,12 @@
 #include <math.h>
 #include <stdlib.h>
 
-double length(Vector p) {
-    return sqrt(p.x * p.x + p.y * p.y);
+double uniform(double low, double high) {
+    return ((double)rand() / RAND_MAX) * (high - low) + low;
 }
 
-double distance(Vector p1, Vector p2) {
-    return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+double length(Vector p) {
+    return sqrt(p.x * p.x + p.y * p.y);
 }
 
 void vmul(Vector *out, const Vector *m, double k, size_t N) {
